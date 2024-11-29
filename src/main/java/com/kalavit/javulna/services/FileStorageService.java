@@ -35,9 +35,15 @@ public class FileStorageService {
 
     public String storeFile(MultipartFile file) {
         String fileName = StringUtils.cleanPath(file.getOriginalFilename());
+        if (fileName.contains("..") || fileName.contains("/") || fileName.contains("\\")) {
+            throw new IllegalArgumentException("Invalid filename");
+        }
         try {
             // Copy file to the target location (Replacing existing file with the same name)
-            Path targetLocation = Paths.get(fileStorageDir, fileName);
+            Path targetLocation = Paths.get(fileStorageDir).resolve(fileName).normalize().toAbsolutePath();
+            if (!targetLocation.startsWith(Paths.get(fileStorageDir).toAbsolutePath())) {
+                throw new IllegalArgumentException("Invalid filename");
+            }
             LOG.debug("gonna write file to {}" ,targetLocation.toString());
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
             return fileName;
@@ -47,8 +53,14 @@ public class FileStorageService {
     }
     
     public Resource loadFileAsResource(String fileName) {
+        if (fileName.contains("..") || fileName.contains("/") || fileName.contains("\\")) {
+            throw new IllegalArgumentException("Invalid filename");
+        }
         try {
-            Path filePath = Paths.get(fileStorageDir, fileName);
+            Path filePath = Paths.get(fileStorageDir).resolve(fileName).normalize().toAbsolutePath();
+            if (!filePath.startsWith(Paths.get(fileStorageDir).toAbsolutePath())) {
+                throw new IllegalArgumentException("Invalid filename");
+            }
             LOG.debug("gonna read file from {}" ,filePath.toString());
             Resource resource = new UrlResource(filePath.toUri());
             if(resource.exists()) {
