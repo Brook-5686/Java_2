@@ -7,6 +7,8 @@ package com.kalavit.javulna.services;
 
 import com.kalavit.javulna.dto.LdapUserDto;
 import com.kalavit.javulna.springconfig.LdapConfig;
+import org.owasp.esapi.ESAPI;
+import org.owasp.esapi.Encoder;
 import java.util.Hashtable;
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
@@ -52,7 +54,10 @@ public class LdapService {
         try {
             LdapUserDto ret = new LdapUserDto();
             DirContext ctx = initContext();
-            String filter = "(&(uid=" + uid + ") (userPassword=" + password + "))";
+            Encoder encoder = ESAPI.encoder();
+            String safeUid = encoder.encodeForLDAP(uid);
+            String safePassword = encoder.encodeForLDAP(password);
+            String filter = "(&(uid=" + safeUid + ") (userPassword=" + safePassword + "))";
 
             SearchControls ctls = new SearchControls();
             ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
